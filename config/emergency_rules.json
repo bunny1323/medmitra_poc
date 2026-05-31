@@ -1,0 +1,144 @@
+{
+  "emergency_rules": [
+    {
+      "id": "cardiac",
+      "phrases": [
+        "chest pain",
+        "chest tightness",
+        "heart attack",
+        "cardiac arrest",
+        "crushing chest",
+        "left arm pain",
+        "jaw pain",
+        "palpitations severe"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Symptoms may indicate a cardiac event. Call 108 (India) or your local emergency number immediately. Do not wait."
+    },
+    {
+      "id": "breathing",
+      "phrases": [
+        "difficulty breathing",
+        "breathing difficulty",
+        "shortness of breath",
+        "unable to breathe",
+        "can't breathe",
+        "cannot breathe",
+        "not breathing",
+        "stopped breathing",
+        "choking",
+        "suffocating",
+        "respiratory distress"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Severe breathing difficulty requires immediate emergency care. Call 108 or your local emergency number now."
+    },
+    {
+      "id": "unconscious",
+      "phrases": [
+        "unconscious",
+        "unresponsive",
+        "passed out",
+        "fainted",
+        "not waking up",
+        "won't wake up",
+        "collapsed"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Loss of consciousness requires immediate emergency response. Call 108 now and place the person in the recovery position."
+    },
+    {
+      "id": "stroke",
+      "phrases": [
+        "stroke",
+        "sudden numbness",
+        "face drooping",
+        "arm weakness sudden",
+        "slurred speech sudden",
+        "sudden confusion",
+        "sudden vision loss",
+        "sudden severe headache",
+        "worst headache of my life"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Symptoms may indicate a stroke. Use FAST (Face drooping, Arm weakness, Speech difficulty, Time to call 108). Every minute counts."
+    },
+    {
+      "id": "bleeding",
+      "phrases": [
+        "severe bleeding",
+        "heavy bleeding",
+        "uncontrolled bleeding",
+        "bleeding won't stop",
+        "blood loss",
+        "hemorrhage",
+        "coughing blood",
+        "vomiting blood"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Severe or uncontrolled bleeding requires immediate emergency care. Apply firm pressure to the wound and call 108."
+    },
+    {
+      "id": "seizure",
+      "phrases": [
+        "seizure",
+        "convulsion",
+        "epileptic",
+        "fitting",
+        "tonic clonic",
+        "grand mal",
+        "status epilepticus"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Seizures require emergency medical attention. Clear the area around the person, do not restrain them, and call 108 immediately."
+    },
+    {
+      "id": "overdose",
+      "phrases": [
+        "overdose",
+        "drug overdose",
+        "medication overdose",
+        "took too many pills",
+        "poisoning",
+        "poisoned",
+        "ingested poison",
+        "swallowed poison",
+        "chemical ingestion",
+        "toxic ingestion"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Suspected overdose or poisoning. Call the Poison Control Centre (1800-11-6117 in India) or 108 immediately. Do not induce vomiting unless instructed by medical professionals."
+    },
+    {
+      "id": "mental_health",
+      "phrases": [
+        "suicidal thoughts",
+        "want to die",
+        "end my life",
+        "kill myself",
+        "self harm",
+        "harming myself",
+        "cutting myself"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ CRISIS: You are not alone. Please reach out immediately: iCall India: 9152987821 | Vandrevala Foundation: 1860-2662-345 (24/7) | Or go to your nearest hospital emergency."
+    },
+    {
+      "id": "anaphylaxis",
+      "phrases": [
+        "anaphylaxis",
+        "anaphylactic",
+        "severe allergic reaction",
+        "throat swelling",
+        "lips swelling",
+        "tongue swelling",
+        "epipen",
+        "allergy shock"
+      ],
+      "severity": "CRITICAL",
+      "message": "⚠️ EMERGENCY: Severe allergic reaction (anaphylaxis) is life-threatening. Use an EpiPen if available and call 108 immediately."
+    }
+  ],
+  "emergency_footer": "⚕️ MedMitra is not a substitute for emergency services. In a life-threatening situation, always call emergency services first.",
+  "min_keyword_match": 1
+}
