@@ -1,0 +1,11 @@
+{
+  "test_cases": [
+    {
+      "id": "cough_adult",
+      "query": "cough and fever since yesterday",
+      "age_group": "adult",
+      "age_years": 25,
+      "expected_topic": "respiratory"
+    }
+  ]
+}

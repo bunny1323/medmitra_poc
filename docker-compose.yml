@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: medmitra-qdrant
+    ports:
+      - "${QDRANT_HOST_PORT:-6333}:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medmitra-ml-search
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=medmitra-ml-search
+      - APP_ENV=production
+      - API_V1_PREFIX=/api/v1
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-}
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION_PREFIX=medmitra_knowledge
+      - QDRANT_COLLECTION_ALIAS=medmitra_knowledge_current
+      - EMBEDDING_MODEL=NeuML/pubmedbert-base-embeddings
+      - EMBEDDING_DEVICE=cpu
+      - DENSE_VECTOR_SIZE=768
+      - EMBEDDING_BATCH_SIZE=16
+      - CHUNK_TARGET_TOKENS=260
+      - CHUNK_MIN_TOKENS=70
+      - CHUNK_MAX_TOKENS=360
+      - CHUNK_OVERLAP_TOKENS=45
+      - RETRIEVAL_DENSE_PREFETCH_K=18
+      - RETRIEVAL_SPARSE_PREFETCH_K=18
+      - RETRIEVAL_FINAL_K=4
+      - RETRIEVAL_MIN_RELEVANCE=0.30
+      - LLM_PROVIDER=groq
+      - LLM_BASE_URL=https://api.groq.com/openai/v1
+      - LLM_MODEL=llama-3.3-70b-versatile
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - LLM_TEMPERATURE=0.15
+      - LLM_MAX_TOKENS=650
+      - LLM_TIMEOUT_SECONDS=30
+      - LOG_LEVEL=INFO
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  qdrant_storage:
+    driver: local

@@ -1,0 +1,173 @@
+{
+  "version": "1.0.0",
+  "description": "Curated deterministic emergency keyword rules for MedMitra prototype. These rules are NOT a substitute for clinical triage. review_status must be updated after medical-domain expert review.",
+  "rules": [
+    {
+      "rule_id": "EMR001",
+      "category": "cardiac",
+      "patterns": [
+        "chest pain",
+        "severe chest pain",
+        "chest tightness",
+        "pressure in chest",
+        "crushing chest pain",
+        "chest pain spreading to arm",
+        "chest pain spreading to jaw"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Cardiac emergency signs detected.",
+      "source_name": "Curated verified emergency rules — cardiac category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR002",
+      "category": "breathing_emergency",
+      "patterns": [
+        "difficulty breathing",
+        "shortness of breath",
+        "cannot breathe",
+        "unable to breathe",
+        "labored breathing",
+        "breathless",
+        "gasping for air",
+        "trouble breathing",
+        "short of breath"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Breathing emergency signs detected.",
+      "source_name": "Curated verified emergency rules — respiratory category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR003",
+      "category": "neurological",
+      "patterns": [
+        "loss of consciousness",
+        "unconscious",
+        "fainted",
+        "fainting",
+        "seizure",
+        "convulsion",
+        "sudden confusion",
+        "confusion",
+        "stroke",
+        "facial drooping",
+        "sudden weakness on one side",
+        "slurred speech",
+        "sudden severe headache"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Neurological emergency signs detected.",
+      "source_name": "Curated verified emergency rules — neurological category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR004",
+      "category": "severe_bleeding",
+      "patterns": [
+        "uncontrolled bleeding",
+        "heavy bleeding",
+        "coughing blood",
+        "vomiting blood",
+        "hemorrhage",
+        "severe blood loss"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Severe bleeding signs detected.",
+      "source_name": "Curated verified emergency rules — bleeding category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR005",
+      "category": "anaphylaxis",
+      "patterns": [
+        "severe allergic reaction",
+        "anaphylaxis",
+        "throat swelling",
+        "tongue swelling",
+        "lips swelling with breathing difficulty",
+        "swelling of face and difficulty breathing"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Anaphylaxis or severe allergic reaction signs detected.",
+      "source_name": "Curated verified emergency rules — allergic reaction category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR006",
+      "category": "self_harm",
+      "patterns": [
+        "suicidal thoughts",
+        "want to harm myself",
+        "thinking about suicide",
+        "want to kill myself",
+        "want to end my life"
+      ],
+      "severity": "urgent",
+      "message": "Immediate support is available. Please contact the local crisis helpline or go to the nearest emergency room.",
+      "source_name": "Curated verified emergency rules — mental health crisis category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR007",
+      "category": "pediatric_danger_sign",
+      "patterns": [
+        "unable to drink or breastfeed",
+        "child unable to drink",
+        "infant unable to breastfeed",
+        "vomits everything",
+        "convulsions",
+        "child convulsing",
+        "child lethargic",
+        "lethargic",
+        "unconscious child",
+        "severe dehydration signs",
+        "child unusually sleepy"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Child danger signs detected.",
+      "source_name": "Curated verified emergency rules — pediatric danger signs (based on WHO IMCI guidelines concept)",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "rule_id": "EMR008",
+      "category": "poisoning",
+      "patterns": [
+        "suspected poisoning",
+        "overdose",
+        "drug overdose",
+        "swallowed poison",
+        "accidental ingestion of chemicals"
+      ],
+      "severity": "urgent",
+      "message": "Seek urgent medical attention immediately. Possible poisoning or overdose detected.",
+      "source_name": "Curated verified emergency rules — poisoning category",
+      "review_status": "official_source_review_required",
+      "enabled": true,
+      "priority": 1
+    }
+  ],
+  "negation_patterns": [
+    "\\bno\\s+",
+    "\\bnot\\s+having\\s+",
+    "\\bwithout\\s+",
+    "\\bdenies\\s+",
+    "\\bnever\\s+had\\s+",
+    "\\bno\\s+history\\s+of\\s+",
+    "\\bruled\\s+out\\s+"
+  ]
+}

@@ -1,0 +1,398 @@
+[
+  {
+    "record_id": "a4df17ea-64ff-4c02-8308-a569510e4977",
+    "record_type": "medicine",
+    "medicine_name": "Amlodipine",
+    "generic_name": "Amlodipine",
+    "aliases": [],
+    "category": "antihypertensive",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "hypertension"
+    ],
+    "side_effects": [
+      "dizziness",
+      "fatigue",
+      "swelling"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "amlodipine amlodipine antihypertensive hypertension dizziness fatigue swelling",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "46abcf58-331d-4580-b4cb-18ec06555860",
+    "record_type": "medicine",
+    "medicine_name": "Amoxicillin",
+    "generic_name": "Amoxicillin",
+    "aliases": [],
+    "category": "antibiotic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "infection"
+    ],
+    "side_effects": [
+      "allergy",
+      "diarrhea",
+      "rash"
+    ],
+    "warnings": [
+      "This is a prescription antibiotic. Do not use without a doctor's prescription. Misuse of antibiotics contributes to antimicrobial resistance."
+    ],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "amoxicillin amoxicillin antibiotic infection allergy diarrhea rash",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "49270242-33a7-41ab-aad7-ea80b81f44e9",
+    "record_type": "medicine",
+    "medicine_name": "Azithromycin",
+    "generic_name": "Azithromycin",
+    "aliases": [],
+    "category": "antibiotic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "infection"
+    ],
+    "side_effects": [
+      "abdominal pain",
+      "headache",
+      "nausea"
+    ],
+    "warnings": [
+      "This is a prescription antibiotic. Do not use without a doctor's prescription. Misuse of antibiotics contributes to antimicrobial resistance."
+    ],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "azithromycin azithromycin antibiotic infection abdominal pain headache nausea",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "0c1283f7-a896-4c54-8adc-e3d67bf3417e",
+    "record_type": "medicine",
+    "medicine_name": "Bupropion",
+    "generic_name": "Bupropion",
+    "aliases": [],
+    "category": "antidepressant",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "depression"
+    ],
+    "side_effects": [
+      "anxiety",
+      "dry mouth",
+      "headache"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "bupropion bupropion antidepressant depression anxiety dry mouth headache",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "d698e189-097c-4305-9b4b-1ee5cbe80d41",
+    "record_type": "medicine",
+    "medicine_name": "Ciprofloxacin",
+    "generic_name": "Ciprofloxacin",
+    "aliases": [],
+    "category": "antibiotic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "infection"
+    ],
+    "side_effects": [
+      "dizziness",
+      "joint pain",
+      "nausea"
+    ],
+    "warnings": [
+      "This is a prescription antibiotic. Do not use without a doctor's prescription. Misuse of antibiotics contributes to antimicrobial resistance."
+    ],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "ciprofloxacin ciprofloxacin antibiotic infection dizziness joint pain nausea",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "ce1f9c66-d86e-468e-b40e-144e6d424301",
+    "record_type": "medicine",
+    "medicine_name": "Escitalopram",
+    "generic_name": "Escitalopram",
+    "aliases": [],
+    "category": "antidepressant",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "depression"
+    ],
+    "side_effects": [
+      "nausea",
+      "sleep issues",
+      "sweating"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "escitalopram escitalopram antidepressant depression nausea sleep issues sweating",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "7fa6791b-183e-4a86-9637-5cbf79a6c2da",
+    "record_type": "medicine",
+    "medicine_name": "Glipizide",
+    "generic_name": "Glipizide",
+    "aliases": [],
+    "category": "antidiabetic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "diabetes"
+    ],
+    "side_effects": [
+      "low blood sugar",
+      "nausea",
+      "skin rash"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "glipizide glipizide antidiabetic diabetes low blood sugar nausea skin rash",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "30b17e89-b821-40a6-8efe-eefaa3aa129f",
+    "record_type": "medicine",
+    "medicine_name": "Ibuprofen",
+    "generic_name": "Ibuprofen",
+    "aliases": [],
+    "category": "analgesic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "pain relief"
+    ],
+    "side_effects": [
+      "heartburn",
+      "nausea",
+      "stomach pain"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "ibuprofen ibuprofen analgesic pain relief heartburn nausea stomach pain",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "d61e6ab7-113e-40b4-99fa-768ac2cbbeef",
+    "record_type": "medicine",
+    "medicine_name": "Insulin Glargine",
+    "generic_name": "Insulin Glargine",
+    "aliases": [],
+    "category": "antidiabetic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "diabetes"
+    ],
+    "side_effects": [
+      "injection site pain",
+      "low sugar",
+      "weight gain"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "insulin glargine insulin glargine antidiabetic diabetes injection site pain low sugar weight gain",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "192dcbcd-b077-49ec-8161-bf705b13de58",
+    "record_type": "medicine",
+    "medicine_name": "Losartan",
+    "generic_name": "Losartan",
+    "aliases": [],
+    "category": "antihypertensive",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "hypertension"
+    ],
+    "side_effects": [
+      "back pain",
+      "cough",
+      "headache"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "losartan losartan antihypertensive hypertension back pain cough headache",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "13fe7e87-c9a5-45a3-b2ea-071616b05e1d",
+    "record_type": "medicine",
+    "medicine_name": "Metformin",
+    "generic_name": "Metformin",
+    "aliases": [],
+    "category": "antidiabetic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "diabetes"
+    ],
+    "side_effects": [
+      "diarrhea",
+      "nausea",
+      "stomach upset"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "metformin metformin antidiabetic diabetes diarrhea nausea stomach upset",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "1943b5f4-acbf-45cd-88f8-c1a99852765b",
+    "record_type": "medicine",
+    "medicine_name": "Metoprolol",
+    "generic_name": "Metoprolol",
+    "aliases": [],
+    "category": "antihypertensive",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "hypertension"
+    ],
+    "side_effects": [
+      "dizziness",
+      "slow heartbeat",
+      "tiredness"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "metoprolol metoprolol antihypertensive hypertension dizziness slow heartbeat tiredness",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "e7947780-3c9a-46b3-951b-2a539cfd69b8",
+    "record_type": "medicine",
+    "medicine_name": "Paracetamol",
+    "generic_name": "Paracetamol",
+    "aliases": [],
+    "category": "analgesic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "pain relief"
+    ],
+    "side_effects": [
+      "fatigue",
+      "liver issues",
+      "rash"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "paracetamol paracetamol analgesic pain relief fatigue liver issues rash",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "92e8b4b5-689f-4c0a-a1a8-84525151bd43",
+    "record_type": "medicine",
+    "medicine_name": "Sertraline",
+    "generic_name": "Sertraline",
+    "aliases": [],
+    "category": "antidepressant",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "depression"
+    ],
+    "side_effects": [
+      "drowsiness",
+      "dry mouth",
+      "insomnia"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "sertraline sertraline antidepressant depression drowsiness dry mouth insomnia",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  },
+  {
+    "record_id": "7d311df5-6e7a-483d-833d-c4cc8fac27a2",
+    "record_type": "medicine",
+    "medicine_name": "Tramadol",
+    "generic_name": "Tramadol",
+    "aliases": [],
+    "category": "analgesic",
+    "dosage_form": "",
+    "mechanism_of_action": "",
+    "uses": [
+      "pain relief"
+    ],
+    "side_effects": [
+      "constipation",
+      "dizziness",
+      "nausea"
+    ],
+    "warnings": [],
+    "manufacturer": "",
+    "salt_composition": "",
+    "search_text": "tramadol tramadol analgesic pain relief constipation dizziness nausea",
+    "source_name": "Patient Drug Records Dataset",
+    "source_type": "kaggle_dataset",
+    "dataset_slug": "real_drug_dataset",
+    "review_status": "prototype_unverified"
+  }
+]

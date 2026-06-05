@@ -1,0 +1,47 @@
+﻿.env
+.env.*
+!.env.example
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# IDE files
+.vscode/
+.idea/
+
+# Qdrant local storage and generated indexes
+qdrant_storage/
+qdrant_data/
+storage/
+app/data/indexes/
+
+# Raw downloaded datasets
+app/data/raw/
+
+# Model and package caches
+.cache/
+models_cache/
+huggingface_cache/
+*.bin
+*.safetensors
+*.npy
+*.pkl
+*.faiss
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
