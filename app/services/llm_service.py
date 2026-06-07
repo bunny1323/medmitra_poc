@@ -1,181 +1,125 @@
 """
 app/services/llm_service.py
 ────────────────────────────
-Optional Groq / Llama response generation.
-
-Safety rules enforced in the system prompt:
-  1. Use ONLY the retrieved context — never invent information.
-  2. Do NOT claim a confirmed diagnosis.
-  3. Do NOT prescribe dosage or treatment plans.
-  4. Do NOT replace a doctor.
-  5. State uncertainty when context is weak.
-  6. Always suggest professional consultation.
-  7. Keep answers short and patient-friendly (≤ 150 words).
-
-Llama is called ONLY when:
-  - GROQ_API_KEY is present in .env
-  - Retrieval returned at least one result
-  - Top relevance score ≥ MIN_RELEVANCE_SCORE (default 0.55)
-  - The query is NOT flagged as an emergency
-
-If any condition fails, a safe local fallback is returned without crashing.
+Calls Groq / Llama to generate a JSON response with an empathetic answer and a severity index.
 """
 
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
-# Load .env from project root
 load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
-# ── Configuration from environment ────────────────────────────────────────────
+_GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+_LLAMA_MODEL  = os.getenv("LLAMA_MODEL", "llama-3.3-70b-versatile")
 
-_GROQ_API_KEY      = os.getenv("GROQ_API_KEY", "")
-_LLAMA_MODEL       = os.getenv("LLAMA_MODEL", "llama-3.3-70b-versatile")
-_MIN_RELEVANCE     = float(os.getenv("MIN_RELEVANCE_SCORE", "0.55"))
-_MAX_TOKENS        = 400
-_TEMPERATURE       = 0.1   # low temperature → more factual, less creative
+_SYSTEM_PROMPT = """You are MedMitra, an empathetic, caring, and highly knowledgeable medical assistant.
+You are talking directly to a patient who is describing their symptoms or asking a medical question.
 
-# ── System prompt ─────────────────────────────────────────────────────────────
+STRICT RULES:
+1. CLEAR, ACCESSIBLE LANGUAGE: Do not use complex medical jargon that a layperson wouldn't understand. Maintain a professional, empathetic, and reassuring tone. Do not be overly casual, but avoid being overly technical.
+2. DO NOT OVERHYPE SEVERITY: If a patient has a headache, a cold, or a mild fever, it is highly likely a common ailment. DO NOT jump to severe conditions unless there are extreme red flags. Most routine queries should be "NORMAL".
+3. PATIENT EMPATHY & RED FLAGS: Make the patient feel heard. In your `answer`, you MUST explicitly call out "red flag" symptoms. Tell the patient exactly what to look out for (e.g., "If you begin to experience X, Y, or Z, please visit a doctor immediately.").
+4. POSSIBLE DISEASES: Provide 2 to 3 possible conditions it could be, ALWAYS prioritizing the most common and least severe ones first. 
+5. HOME CAUTIONS: Provide basic, safe things the patient can do at home to feel better or be cautious (e.g., drink water, rest, avoid bright lights).
+6. SEVERITY INDEX:
+   - "NORMAL": Routine questions, common symptoms (headaches, cold, mild pain). 
+   - "URGENT": Symptoms needing a doctor soon but not instantly life-threatening (e.g., persistent high fever, moderate unexplained pain).
+   - "CRITICAL": Life-threatening emergencies (e.g., severe chest pain, stroke signs, extreme bleeding).
 
-_SYSTEM_PROMPT = """You are MedMitra, a medical information assistant.
-
-STRICT RULES — follow every rule without exception:
-
-1. Answer ONLY using the information provided in the CONTEXT block below.
-2. NEVER claim a confirmed diagnosis. Always say "may suggest" or "could indicate".
-3. NEVER recommend specific dosages or prescribe treatments.
-4. NEVER invent information that is not in the context.
-5. If the context is weak or unrelated, say so clearly and suggest seeing a doctor.
-6. Always recommend consulting a qualified healthcare professional.
-7. Keep the response under 120 words. Use simple, patient-friendly language.
-8. Do NOT reproduce the context verbatim — summarise in your own words.
-9. End every response with: "Please consult a qualified healthcare professional."
+OUTPUT FORMAT:
+You must return a valid JSON object with EXACTLY four keys: "answer", "possible_diseases", "home_cautions", and "severity_index". 
+Do NOT wrap the JSON in markdown code blocks. Just output the raw JSON object.
+Example:
+{
+  "answer": "I'm sorry you're experiencing this headache. Based on the medical information, these symptoms often align with a tension headache or a common cold. However, please monitor your symptoms closely. If you develop a sudden, severe headache unlike any you've had before, a stiff neck, or visual changes, you should visit a doctor immediately.",
+  "possible_diseases": ["Tension Headache", "Common Cold", "Dehydration"],
+  "home_cautions": ["Drink plenty of water", "Rest in a quiet, dark room", "Apply a cool cloth to your forehead"],
+  "severity_index": "NORMAL"
+}
 """
 
-# ── Public API ─────────────────────────────────────────────────────────────────
-
 def is_groq_configured() -> bool:
-    """Return True if a non-placeholder GROQ_API_KEY is set."""
     return bool(_GROQ_API_KEY) and _GROQ_API_KEY not in (
         "add_your_own_key_here", "YOUR_GROQ_API_KEY"
     )
 
-
 def generate_response(
     query: str,
     retrieval_result: dict[str, Any],
+    emergency_warning: str = None
 ) -> dict[str, Any]:
-    """
-    Generate a Llama-based response using retrieved context.
+    
+    results = retrieval_result.get("results", [])
 
-    Parameters
-    ----------
-    query            : str  — original user query
-    retrieval_result : dict — output from retrieval_service.search()
-
-    Returns
-    -------
-    {
-        "answer":      str,
-        "model_used":  str,
-        "source":      "groq" | "local_fallback",
-        "skipped":     bool,
-        "skip_reason": str | None,
-    }
-    """
-    top_relevance = retrieval_result.get("top_relevance", 0.0)
-    results       = retrieval_result.get("results", [])
-
-    # ── Guard: no results ────────────────────────────────────────────────────
     if not results:
-        return _fallback(
-            "No relevant medical information was found for this query.",
-            skip_reason="No retrieval results",
-        )
+        return _fallback("No relevant medical information was found in the book.", "NORMAL")
 
-    # ── Guard: relevance too low ──────────────────────────────────────────────
-    if top_relevance < _MIN_RELEVANCE:
-        return _fallback(
-            f"I could not find sufficiently relevant medical information for this query "
-            f"(relevance: {top_relevance:.2f}, threshold: {_MIN_RELEVANCE:.2f}). "
-            f"Please consult a qualified healthcare professional.",
-            skip_reason=f"Relevance {top_relevance:.2f} below threshold {_MIN_RELEVANCE:.2f}",
-        )
-
-    # ── Guard: API key not configured ────────────────────────────────────────
     if not is_groq_configured():
-        context_text = _build_context(results)
-        return _fallback(
-            f"Groq API not configured. Here is what the database found:\n\n{context_text}\n\n"
-            "Please consult a qualified healthcare professional.",
-            skip_reason="GROQ_API_KEY not set",
-        )
+        return _fallback("Groq API not configured. Cannot process LLM response.", "NORMAL")
 
-    # ── Build context block from top results ──────────────────────────────────
     context_text = _build_context(results)
 
     user_message = (
         f"USER QUERY: {query}\n\n"
-        f"CONTEXT:\n{context_text}\n\n"
-        "Answer the user's query using only the context above."
+        f"CONTEXT (From Medical Book - Use this for accuracy but explain it VERY SIMPLY):\n{context_text}\n\n"
     )
+    
+    if emergency_warning:
+        user_message += f"\nCRITICAL RULE MATCH: The system detected an emergency keyword. You MUST include this warning exactly in your answer: '{emergency_warning}' and you MUST set the severity_index to 'CRITICAL'.\n\n"
+        
+    user_message += "Generate the JSON response as instructed."
 
-    # ── Call Groq API ─────────────────────────────────────────────────────────
     try:
-        from groq import Groq   # imported here to avoid crash if not installed
+        from groq import Groq
         client = Groq(api_key=_GROQ_API_KEY)
         response = client.chat.completions.create(
             model=_LLAMA_MODEL,
+            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user",   "content": user_message},
             ],
-            max_tokens=_MAX_TOKENS,
-            temperature=_TEMPERATURE,
+            max_tokens=800,
+            temperature=0.3,
         )
-        answer = response.choices[0].message.content.strip()
+        
+        content = response.choices[0].message.content.strip()
+        parsed = json.loads(content)
+        
         return {
-            "answer":      answer,
-            "model_used":  _LLAMA_MODEL,
-            "source":      "groq",
-            "skipped":     False,
-            "skip_reason": None,
+            "answer": parsed.get("answer", "I couldn't generate a proper response."),
+            "possible_diseases": parsed.get("possible_diseases", []),
+            "home_cautions": parsed.get("home_cautions", []),
+            "severity_index": parsed.get("severity_index", "NORMAL"),
+            "model_used": _LLAMA_MODEL,
+            "source": "groq",
         }
 
     except Exception as e:
-        # API call failed — return fallback, never crash the app
-        context_text = _build_context(results)
-        return _fallback(
-            f"Groq API call failed ({type(e).__name__}: {e}).\n\n"
-            f"Retrieved context:\n{context_text}\n\n"
-            "Please consult a qualified healthcare professional.",
-            skip_reason=f"Groq error: {e}",
-        )
+        return _fallback(f"Groq API call failed: {str(e)}. Please try again.", "NORMAL")
 
-
-# ── Internal helpers ──────────────────────────────────────────────────────────
 
 def _build_context(results: list[dict]) -> str:
-    """Format top retrieval results into a numbered context block."""
     lines = []
-    for r in results[:3]:   # use at most top-3 to keep context concise
-        score   = r.get("relevance_score", 0)
+    for r in results[:5]:  # use top 5 chunks
+        page = r.get("metadata", {}).get("page", "Unknown")
         content = r.get("content", "").strip()
-        lines.append(f"[{r['rank']}] (relevance {score:.2f}) {content}")
-    return "\n".join(lines)
+        lines.append(f"[Page {page}] {content}")
+    return "\n\n".join(lines)
 
 
-def _fallback(message: str, skip_reason: str) -> dict:
-    """Return a safe local fallback response."""
+def _fallback(message: str, severity: str) -> dict:
     return {
-        "answer":      message,
-        "model_used":  "local_fallback",
-        "source":      "local_fallback",
-        "skipped":     True,
-        "skip_reason": skip_reason,
+        "answer": message,
+        "possible_diseases": [],
+        "home_cautions": [],
+        "severity_index": severity,
+        "model_used": "local_fallback",
+        "source": "local_fallback",
     }

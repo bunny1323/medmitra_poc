@@ -1,198 +1,129 @@
 """
 app/services/retrieval_service.py
 ──────────────────────────────────
-Handles all vector search against persistent ChromaDB collections.
-
-Design decisions:
-  - Model is loaded once and cached (SentenceTransformer is slow to init)
-  - Collections are opened read-only on each call (ChromaDB PersistentClient
-    is safe to reopen multiple times — it just reads SQLite)
-  - Distance is converted to a 0–1 relevance score for the UI
-  - Relevance score ≠ diagnosis probability — always state this clearly
-
-ChromaDB uses L2 distance by default; we request cosine distance by
-setting the collection metadata at creation time (see build scripts).
-Cosine distance range: 0 (identical) to 2 (opposite).
-We map it to relevance = 1 - (distance / 2) so 1 = perfect, 0 = unrelated.
+Handles vector search against Qdrant using Hybrid Search for the medical book.
 """
 
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import Any
 
-import chromadb
-from sentence_transformers import SentenceTransformer
+from qdrant_client import QdrantClient
+from qdrant_client.http import models as qmodels
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
+# Using fastembed for BOTH Dense and Sparse to avoid DLL blocks
+from fastembed import TextEmbedding, SparseTextEmbedding
 
-_PROJECT_ROOT = Path(__file__).parent.parent.parent
-_CHROMA_PATH   = _PROJECT_ROOT / "chroma_db"
-_MODEL_NAME    = "NeuML/pubmedbert-base-embeddings"
+_DENSE_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+_SPARSE_MODEL_NAME = "prithivida/Splade_PP_en_v1"
+_QDRANT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "qdrant_db")
 
-# ── Collection names (must match the build scripts) ───────────────────────────
+MEDICAL_BOOK_COLLECTION = "medical_book_2025"
 
-DISEASE_COLLECTION  = "medmitra_diseases"
-MEDICINE_COLLECTION = "medmitra_medicines"
+_dense_model: TextEmbedding | None = None
+_sparse_model: SparseTextEmbedding | None = None
+_qdrant_client: QdrantClient | None = None
 
-# ── Module-level singletons (loaded once per Streamlit process) ───────────────
+def get_dense_model() -> TextEmbedding:
+    global _dense_model
+    if _dense_model is None:
+        print(f"[retrieval_service] Loading dense model: {_DENSE_MODEL_NAME}")
+        _dense_model = TextEmbedding(_DENSE_MODEL_NAME)
+    return _dense_model
 
-_model: SentenceTransformer | None = None
+def get_sparse_model() -> SparseTextEmbedding:
+    global _sparse_model
+    if _sparse_model is None:
+        print(f"[retrieval_service] Loading sparse model: {_SPARSE_MODEL_NAME}")
+        _sparse_model = SparseTextEmbedding(_SPARSE_MODEL_NAME)
+    return _sparse_model
 
-
-def get_model() -> SentenceTransformer:
-    """
-    Return the shared SentenceTransformer model.
-    Loads from HuggingFace cache on first call; subsequent calls are instant.
-    """
-    global _model
-    if _model is None:
-        print(f"[retrieval_service] Loading embedding model: {_MODEL_NAME}")
-        _model = SentenceTransformer(_MODEL_NAME)
-        print("[retrieval_service] Model loaded.")
-    return _model
-
-
-def _get_client() -> chromadb.PersistentClient:
-    """Open (or reopen) the ChromaDB persistent client."""
-    return chromadb.PersistentClient(path=str(_CHROMA_PATH))
-
-
-def _cosine_distance_to_relevance(distance: float) -> float:
-    """
-    Convert ChromaDB cosine distance (0–2) to a relevance score (0–1).
-    1.0 = perfect match, 0.0 = completely unrelated.
-    """
-    distance = max(0.0, min(2.0, distance))   # clamp to valid range
-    return round(1.0 - (distance / 2.0), 4)
-
+def get_qdrant_client() -> QdrantClient:
+    global _qdrant_client
+    if _qdrant_client is None:
+        _qdrant_client = QdrantClient(path=_QDRANT_PATH)
+    return _qdrant_client
 
 def collection_exists(collection_name: str) -> bool:
-    """Return True if the named collection exists and has at least one record."""
     try:
-        client = _get_client()
-        col = client.get_collection(name=collection_name)
-        return col.count() > 0
+        client = get_qdrant_client()
+        collections = client.get_collections().collections
+        return any(c.name == collection_name for c in collections)
     except Exception:
         return False
 
-
 def search(
     query: str,
-    collection_name: str,
     top_k: int = 5,
 ) -> dict[str, Any]:
-    """
-    Embed the query and retrieve the top_k most similar documents.
-
-    Parameters
-    ----------
-    query           : str   — user's natural-language question
-    collection_name : str   — "medmitra_diseases" or "medmitra_medicines"
-    top_k           : int   — number of results to return
-
-    Returns
-    -------
-    {
-        "query": str,
-        "collection": str,
-        "results": [
-            {
-                "rank": int,
-                "id": str,
-                "content": str,
-                "distance": float,
-                "relevance_score": float,   # 0–1; NOT diagnosis probability
-                "metadata": dict,
-            },
-            ...
-        ],
-        "top_relevance": float,
-        "model": str,
-        "warning": str,   # always present — reminds user this is NOT diagnosis
-    }
-    """
+    collection_name = MEDICAL_BOOK_COLLECTION
+    
     if not query or not query.strip():
-        return _empty_result(query, collection_name, "Empty query provided.")
+        return _empty_result(query, "Empty query provided.")
 
-    # 1. Embed the query
-    model = get_model()
-    query_embedding = model.encode(
-        query.strip(),
-        normalize_embeddings=True,
-        
-    ).tolist()
-
-    # 2. Open collection
     try:
-        client = _get_client()
-        col = client.get_collection(name=collection_name)
+        client = get_qdrant_client()
+        if not collection_exists(collection_name):
+             return _empty_result(query, f"Collection {collection_name} not found. Run ingest script.")
     except Exception as e:
-        return _empty_result(
-            query,
-            collection_name,
-            f"Collection '{collection_name}' not found. "
-            f"Run the build script first.\n\nError: {e}",
-        )
+        return _empty_result(query, f"Qdrant connection failed: {e}")
 
-    # 3. Query
+    dense_model = get_dense_model()
+    # fastembed returns a generator, so we convert to list and take the first item
+    dense_embedding = list(dense_model.embed([query.strip()]))[0].tolist()
+    
+    sparse_model = get_sparse_model()
+    sparse_query = list(sparse_model.query_embed(query.strip()))[0]
+
     try:
-        raw = col.query(
-            query_embeddings=[query_embedding],
-            n_results=min(top_k, col.count()),
-            include=["documents", "distances", "metadatas"],
-        )
+        search_result = client.query_points(
+            collection_name=collection_name,
+            prefetch=[
+                qmodels.Prefetch(
+                    query=dense_embedding,
+                    using="dense",
+                    limit=20
+                ),
+                qmodels.Prefetch(
+                    query=qmodels.SparseVector(
+                        indices=sparse_query.indices.tolist(),
+                        values=sparse_query.values.tolist()
+                    ),
+                    using="sparse",
+                    limit=20
+                )
+            ],
+            query=qmodels.FusionQuery(fusion=qmodels.Fusion.RRF),
+            limit=top_k
+        ).points
     except Exception as e:
-        return _empty_result(query, collection_name, f"ChromaDB query failed: {e}")
+        return _empty_result(query, f"Qdrant query failed: {e}")
 
-    # 4. Parse results
     results = []
-    ids       = raw.get("ids",       [[]])[0]
-    documents = raw.get("documents", [[]])[0]
-    distances = raw.get("distances", [[]])[0]
-    metadatas = raw.get("metadatas", [[]])[0]
-
-    for rank, (doc_id, content, dist, meta) in enumerate(
-        zip(ids, documents, distances, metadatas), start=1
-    ):
-        relevance = _cosine_distance_to_relevance(dist)
+    for rank, point in enumerate(search_result, start=1):
+        score = getattr(point, "score", 0.0)
         results.append({
-            "rank":            rank,
-            "id":              doc_id,
-            "content":         content,
-            "distance":        round(dist, 4),
-            "relevance_score": relevance,
-            "metadata":        meta or {},
+            "rank": rank,
+            "id": str(point.id),
+            "content": point.payload.get("content", ""),
+            "relevance_score": round(score, 4),
+            "metadata": point.payload or {},
         })
 
     top_relevance = results[0]["relevance_score"] if results else 0.0
 
     return {
-        "query":         query,
-        "collection":    collection_name,
-        "results":       results,
+        "query": query,
+        "results": results,
         "top_relevance": top_relevance,
-        "model":         _MODEL_NAME,
-        "warning": (
-            "⚕️ Relevance scores indicate semantic similarity to retrieved records — "
-            "they are NOT diagnosis probabilities and do NOT confirm any medical condition. "
-            "Always consult a qualified healthcare professional."
-        ),
+        "model": "Hybrid (BGE-small + SPLADE)"
     }
 
-
-def _empty_result(query: str, collection: str, reason: str) -> dict:
-    """Return a well-formed empty result with an explanatory reason."""
+def _empty_result(query: str, reason: str) -> dict:
     return {
-        "query":         query,
-        "collection":    collection,
-        "results":       [],
+        "query": query,
+        "results": [],
         "top_relevance": 0.0,
-        "model":         _MODEL_NAME,
-        "error":         reason,
-        "warning": (
-            "⚕️ Relevance scores are NOT diagnosis probabilities. "
-            "Always consult a qualified healthcare professional."
-        ),
+        "error": reason
     }
