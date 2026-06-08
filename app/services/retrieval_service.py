@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
@@ -42,7 +45,12 @@ def get_sparse_model() -> SparseTextEmbedding:
 def get_qdrant_client() -> QdrantClient:
     global _qdrant_client
     if _qdrant_client is None:
-        _qdrant_client = QdrantClient(path=_QDRANT_PATH)
+        qdrant_url = os.getenv("QDRANT_URL")
+        qdrant_api_key = os.getenv("QDRANT_API_KEY")
+        if qdrant_url and qdrant_api_key:
+            _qdrant_client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+        else:
+            _qdrant_client = QdrantClient(path=_QDRANT_PATH)
     return _qdrant_client
 
 def collection_exists(collection_name: str) -> bool:

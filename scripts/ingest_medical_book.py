@@ -13,6 +13,10 @@ from pathlib import Path
 # Fix path to allow importing app modules
 sys.path.append(str(Path(__file__).parent.parent))
 
+import time
+from dotenv import load_dotenv
+load_dotenv()
+
 import fitz  # PyMuPDF
 from tqdm import tqdm
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -86,7 +90,14 @@ def build_index(chunks: list[dict]):
     dense_model = TextEmbedding(DENSE_MODEL_NAME)
     sparse_model = SparseTextEmbedding(SPARSE_MODEL_NAME)
     
-    client = QdrantClient(path=str(QDRANT_PATH))
+    qdrant_url = os.getenv("QDRANT_URL")
+    qdrant_api_key = os.getenv("QDRANT_API_KEY")
+    if qdrant_url and qdrant_api_key:
+        print("Using Qdrant Cloud...")
+        client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key, timeout=300.0)
+    else:
+        print("Using local Qdrant...")
+        client = QdrantClient(path=str(QDRANT_PATH), timeout=300.0)
     
     # Check if collection exists
     collections = client.get_collections().collections
@@ -114,7 +125,7 @@ def build_index(chunks: list[dict]):
         }
     )
 
-    BATCH_SIZE = 100
+    BATCH_SIZE = 15
     print(f"Embedding and uploading {len(chunks)} chunks in batches of {BATCH_SIZE}...")
     
     for i in tqdm(range(0, len(chunks), BATCH_SIZE), desc="Uploading to Qdrant"):
@@ -151,10 +162,21 @@ def build_index(chunks: list[dict]):
                 payload=payload
             ))
             
-        client.upsert(
-            collection_name=COLLECTION_NAME,
-            points=points
-        )
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                client.upsert(
+                    collection_name=COLLECTION_NAME,
+                    points=points
+                )
+                break
+            except Exception as e:
+                print(f"\\nUpsert failed: {e}. Retrying {attempt+1}/{max_retries} in 5s...")
+                time.sleep(5.0)
+        else:
+            print("\\nFailed to upload batch after max retries.")
+            
+        time.sleep(1.0)  # Pause to avoid rate limits and connection drops
 
     print("✅ Ingestion complete.")
 

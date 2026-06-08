@@ -29,6 +29,9 @@ data/*.json
 # Model and large generated files
 *.pkl
 *.pt
+
+# Qdrant local database
+qdrant_db/
 *.bin
 *.safetensors
 
