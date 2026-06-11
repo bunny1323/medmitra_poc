@@ -1,46 +1,9 @@
-# Environment variables and secret keys
 .env
-.env.*
-!.env.example
-
-# Python cache files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
 venv/
 .venv/
-env/
-
-# Streamlit secrets
-.streamlit/secrets.toml
-
-# Local vector database
-chroma_db/
-*.sqlite3
-
-# Dataset files
-data/*.csv
-data/*.xlsx
-data/*.json
-!data/README.md
-
-# Model and large generated files
-*.pkl
-*.pt
-
-# Qdrant local database
+__pycache__/
+*.pyc
 qdrant_db/
-*.bin
-*.safetensors
-
-# Logs
+data/books/
+data/registry/
 *.log
-
-# VS Code settings
-.vscode/
-
-# Operating-system files
-.DS_Store
-Thumbs.db

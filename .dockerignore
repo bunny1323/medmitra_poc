@@ -1,0 +1,16 @@
+.env
+.env.*
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+qdrant_db/
+data/books/
+data/registry/
+.git/
+.github/
+.vscode/
+.idea/
+tests/
+*.log
