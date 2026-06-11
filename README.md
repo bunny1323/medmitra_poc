@@ -1,5 +1,13 @@
-# ⚕️ MedMitra — RAG Backend API
+---
+title: MedMitra RAG API
+emoji: ⚕️
+sdk: docker
+app_port: 7860
+---
 
+# MedMitra RAG API
+
+FastAPI backend for MedMitra semantic search and RAG.
 MedMitra is a healthcare-information search and RAG backend built with **FastAPI**, **Qdrant (Hybrid Search)**, **PyMuPDF**, and **Groq (Llama)**. 
 
 This API provides secure endpoints to ingest multiple medical textbooks (PDFs), runs deterministic emergency and symptom severity classifications, retrieves context using a hybrid vector-search schema, and generates safe, grounded information responses.
