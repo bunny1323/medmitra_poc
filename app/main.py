@@ -11,6 +11,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +20,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.get("/")
+def root():
+    return {
+        "service": "MedMitra RAG Backend",
+        "status": "running",
+        "docs": "/docs",
+        "health_live": "/health/live",
+        "health_ready": "/health/ready",
+        "main_query_endpoint": "/api/v1/query",
+    }
 
 app.include_router(api_router, prefix="/api/v1")
 

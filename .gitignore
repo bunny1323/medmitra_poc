@@ -1,9 +1,37 @@
+# Secrets
 .env
+.env.*
+!.env.example
+
+# Python environments and caches
 venv/
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# Node.js dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Local Qdrant indexes
 qdrant_db/
+
+# Medical PDFs and local registries
+data/*.pdf
 data/books/
+data/books_large_backup/
 data/registry/
+
+# Logs and IDE files
 *.log
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
