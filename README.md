@@ -196,6 +196,20 @@ To deploy this API on Hugging Face Spaces:
   }
   ```
 
+#### 4. Parse Prescription Endpoint
+- **URL**: `/api/v1/prescription/parse`
+- **Method**: `POST`
+- **Headers**: `Content-Type: multipart/form-data`
+- **Body**: Upload an image file under the key `file`.
+
+**cURL Example**:
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/prescription/parse" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@/path/to/prescription_image.jpg"
+```
+
 ---
 
 ## 🔮 Future Benchmarking & Evaluation
