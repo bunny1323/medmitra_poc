@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+import base64
 
 from app.api.schemas import (
     QueryRequest,
     QueryResponse,
     ReindexRequest,
     SourceItem,
+    PrescriptionResponse,
 )
 from app.core.security import verify_api_key
 from app.services import ingestion_service
@@ -14,7 +16,7 @@ from app.services import llm_service
 from app.services import retrieval_service
 from app.services.emergency_service import check_emergency
 from app.services.severity_service import check_severity
-
+from app.services.prescription_service import parse_prescription_image
 
 router = APIRouter()
 
@@ -277,3 +279,21 @@ def trigger_reindex(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Reindexing failed: {exc}",
         ) from exc
+
+
+@router.post("/prescription/parse", response_model=PrescriptionResponse)
+async def parse_prescription(file: UploadFile = File(...)):
+    """
+    Parse a prescription image and extract the medicine names,
+    with an auto-correction layer for blurry handwriting.
+    """
+    try:
+        content = await file.read()
+        base64_image = base64.b64encode(content).decode("utf-8")
+        result = parse_prescription_image(base64_image)
+        return result
+    except Exception as e:
+        return PrescriptionResponse(
+            medicines=[],
+            error=f"Error parsing prescription: {str(e)}"
+        )
