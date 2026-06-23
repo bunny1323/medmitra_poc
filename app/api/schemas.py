@@ -88,7 +88,7 @@ class QueryResponse(BaseModel):
         description="Emergency phrases matched from the query.",
     )
     safety_blocked: bool = Field(
-        ...,
+        default=False,
         description="Whether the answer was blocked by medical safety policy.",
     )
     safety_reason: Optional[str] = Field(
@@ -108,16 +108,20 @@ class ReindexRequest(BaseModel):
     )
 
 
+# ---------------------------------------------------------------------
+# Prescription models
+# ---------------------------------------------------------------------
+
 class PrescriptionMedicine(BaseModel):
-    name: str
-    dosage: str
-    frequency: str
-    duration: str
-    confidence: str
+    name: str = Field(..., description="Medicine name")
+    dosage: str = Field(default="Not specified", description="Dosage information")
+    frequency: str = Field(default="Not specified", description="How often to take")
+    duration: str = Field(default="Not specified", description="How long to take")
+    confidence: str = Field(default="Medium", description="OCR confidence")
 
 
 class PrescriptionResponse(BaseModel):
     medicines: List[PrescriptionMedicine] = Field(default_factory=list)
-    doctor_notes: str = ""
-    unreadable_text_present: bool = False
-    error: Optional[str] = None
+    doctor_notes: str = Field(default="")
+    unreadable_text_present: bool = Field(default=False)
+    error: Optional[str] = Field(default=None)
