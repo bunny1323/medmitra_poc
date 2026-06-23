@@ -30,3 +30,16 @@ class ReindexRequest(BaseModel):
     mode: str = Field("append", description="Reindex mode: append, replace, delete, rebuild")
     book_filename: Optional[str] = Field(None, description="Filename of the book to process")
     source_id: Optional[str] = Field(None, description="Source ID of the book to delete or replace")
+
+class MedicineDetail(BaseModel):
+    name: str = Field(..., description="The name of the medicine")
+    dosage: Optional[str] = Field(None, description="The dosage strength (e.g. 500mg)")
+    frequency: Optional[str] = Field(None, description="How often to take it (e.g. Twice a day)")
+    duration: Optional[str] = Field(None, description="How long to take it (e.g. 5 days)")
+    confidence: str = Field(..., description="Confidence level of the extraction: High, Medium, or Low")
+
+class PrescriptionResponse(BaseModel):
+    medicines: List[MedicineDetail] = Field(default_factory=list, description="List of medicines parsed from the prescription")
+    doctor_notes: Optional[str] = Field(None, description="Any additional notes or instructions from the doctor")
+    unreadable_text_present: bool = Field(False, description="Whether some parts of the prescription were completely unreadable")
+    error: Optional[str] = Field(None, description="Error message if parsing failed")
