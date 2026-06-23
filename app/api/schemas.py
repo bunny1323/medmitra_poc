@@ -1,45 +1,123 @@
-from pydantic import BaseModel, Field
+from __future__ import annotations
+
 from typing import List, Optional
 
+from pydantic import BaseModel, Field
+
+
 class QueryRequest(BaseModel):
-    query: str = Field(..., description="The medical query/symptoms to search for")
-    top_k: int = Field(default=5, ge=1, le=20)
+    query: str = Field(
+        ...,
+        description="The medical query, symptom description, or first-aid question to search for.",
+    )
+    top_k: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of retrieved chunks to use for grounding the answer.",
+    )
+
 
 class SourceItem(BaseModel):
-    page: str
-    content: str
-    source_name: Optional[str] = None
-    original_filename: Optional[str] = None
+    page: str = Field(
+        ...,
+        description="Page number or page label from the source document.",
+    )
+    content: str = Field(
+        ...,
+        description="Retrieved content snippet used for answer grounding.",
+    )
+    source_name: Optional[str] = Field(
+        default=None,
+        description="Human-readable source/book name.",
+    )
+    original_filename: Optional[str] = Field(
+        default=None,
+        description="Original uploaded filename.",
+    )
+
 
 class QueryResponse(BaseModel):
-    query: str
-    answer_mode: str
-    severity_index: str
-    severity_reasons: List[str] = Field(default_factory=list)
-    retrieval_relevance_score: float
-    retrieval_relevance_level: str
-    confidence_note: str
-    answer: str
-    home_cautions: List[str] = Field(default_factory=list)
-    sources: List[SourceItem] = Field(default_factory=list)
-    error: Optional[str] = None
-    emergency_detected: Optional[bool] = None
-    emergency_matches: Optional[List[str]] = None
+    query: str = Field(..., description="Original user query.")
+    answer_mode: str = Field(
+        ...,
+        description="Mode used to answer: emergency_escalation, retrieval_grounded, medical_safety_block, general_information_fallback.",
+    )
+    severity_index: str = Field(
+        ...,
+        description="Deterministic severity label such as NORMAL, URGENT, or CRITICAL.",
+    )
+    severity_reasons: List[str] = Field(
+        default_factory=list,
+        description="Matched severity triggers or reasons for the severity label.",
+    )
+    retrieval_relevance_score: float = Field(
+        ...,
+        description="Numeric retrieval relevance score after hybrid search/rerank.",
+    )
+    retrieval_relevance_level: str = Field(
+        ...,
+        description="Bucketed retrieval relevance level such as VERY_LOW, LOW, MEDIUM, HIGH.",
+    )
+    confidence_note: str = Field(
+        ...,
+        description="Clarifies that retrieval score is not a diagnosis probability.",
+    )
+    answer: str = Field(
+        ...,
+        description="Final grounded answer shown to the user.",
+    )
+    home_cautions: List[str] = Field(
+        default_factory=list,
+        description="Safety cautions / home-care guardrails.",
+    )
+    sources: List[SourceItem] = Field(
+        default_factory=list,
+        description="Retrieved source snippets used for grounding.",
+    )
+    error: Optional[str] = Field(
+        default=None,
+        description="Error message if something failed, else null.",
+    )
+    emergency_detected: bool = Field(
+        ...,
+        description="Whether emergency detector triggered.",
+    )
+    emergency_matches: List[str] = Field(
+        default_factory=list,
+        description="Emergency phrases matched from the query.",
+    )
+    safety_blocked: bool = Field(
+        ...,
+        description="Whether the answer was blocked by medical safety policy.",
+    )
+    safety_reason: Optional[str] = Field(
+        default=None,
+        description="Reason why the answer was safety-blocked, if applicable.",
+    )
+
 
 class ReindexRequest(BaseModel):
-    mode: str = Field("append", description="Reindex mode: append, replace, delete, rebuild")
-    book_filename: Optional[str] = Field(None, description="Filename of the book to process")
-    source_id: Optional[str] = Field(None, description="Source ID of the book to delete or replace")
+    mode: str = Field(
+        ...,
+        description="append | replace | delete | rebuild",
+    )
+    source_id: Optional[str] = Field(
+        default=None,
+        description="Required for replace/delete modes.",
+    )
 
-class MedicineDetail(BaseModel):
-    name: str = Field(..., description="The name of the medicine")
-    dosage: Optional[str] = Field(None, description="The dosage strength (e.g. 500mg)")
-    frequency: Optional[str] = Field(None, description="How often to take it (e.g. Twice a day)")
-    duration: Optional[str] = Field(None, description="How long to take it (e.g. 5 days)")
-    confidence: str = Field(..., description="Confidence level of the extraction: High, Medium, or Low")
+
+class PrescriptionMedicine(BaseModel):
+    name: str
+    dosage: str
+    frequency: str
+    duration: str
+    confidence: str
+
 
 class PrescriptionResponse(BaseModel):
-    medicines: List[MedicineDetail] = Field(default_factory=list, description="List of medicines parsed from the prescription")
-    doctor_notes: Optional[str] = Field(None, description="Any additional notes or instructions from the doctor")
-    unreadable_text_present: bool = Field(False, description="Whether some parts of the prescription were completely unreadable")
-    error: Optional[str] = Field(None, description="Error message if parsing failed")
+    medicines: List[PrescriptionMedicine] = Field(default_factory=list)
+    doctor_notes: str = ""
+    unreadable_text_present: bool = False
+    error: Optional[str] = None
