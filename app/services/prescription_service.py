@@ -1,6 +1,6 @@
 """
 app/services/prescription_service.py
-Handles parsing of prescription images using Groq Vision Model and fuzzy matching.
+Handles parsing of prescription images using Groq Vision and post-processing medicine output.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ load_dotenv()
 _GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 _VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-# Simple medicine dictionary for fuzzy matching
+# Expanded medicine list for fuzzy matching
 COMMON_MEDICINES = [
     "Amoxicillin", "Paracetamol", "Ibuprofen", "Aspirin", "Azithromycin",
     "Cetirizine", "Metformin", "Omeprazole", "Pantoprazole", "Ciprofloxacin",
@@ -28,7 +28,13 @@ COMMON_MEDICINES = [
     "Hydrochlorothiazide", "Furosemide", "Spironolactone", "Clopidogrel",
     "Warfarin", "Rivaroxaban", "Apixaban", "Dabigatran", "Enoxaparin",
     "Insulin Glargine", "Insulin Lispro", "Insulin Aspart", "Insulin Detemir",
+
+    # Common Indian brands / common names
+    "Dolo 650", "Crocin", "Augmentin", "Azee", "Pan 40", "Pantocid",
+    "Montek LC", "Telma", "Ecosprin", "Shelcal", "Becosules", "Zerodol",
+    "Taxim", "Cefixime", "ORS", "Sinarest", "Allegra", "Meftal",
 ]
+
 
 _SYSTEM_PROMPT = """You are an expert medical transcriptionist.
 Your job is to read handwritten medical prescriptions and extract the text accurately.
@@ -53,19 +59,95 @@ Output ONLY raw JSON.
 """
 
 
+def _clean_text(value: Any, default: str = "Not specified") -> str:
+    """Convert value to clean string."""
+    if value is None:
+        return default
+
+    text = str(value).strip()
+    if not text:
+        return default
+
+    return text
+
+
+def _clean_medicine_name(name: str) -> str:
+    """Clean medicine name formatting before fuzzy match."""
+    name = _clean_text(name)
+
+    if name == "Not specified":
+        return name
+
+    # Collapse multiple spaces
+    name = " ".join(name.split())
+
+    # Title-case only if all caps / ugly casing
+    # Example: PARACETAMOL -> Paracetamol
+    # Example: cetirizine -> Cetirizine
+    if name.isupper() or name.islower():
+        name = name.title()
+
+    return name
+
+
 def _fuzzy_match_medicine(name: str) -> str:
     """Try to match a noisy medicine name to a known medicine list."""
     if not name or name.lower() == "not specified":
         return name
 
-    matches = difflib.get_close_matches(name.title(), COMMON_MEDICINES, n=1, cutoff=0.6)
+    cleaned = _clean_medicine_name(name)
+
+    matches = difflib.get_close_matches(
+        cleaned,
+        COMMON_MEDICINES,
+        n=1,
+        cutoff=0.72,   # stronger than 0.6
+    )
     if matches:
         return matches[0]
-    return name
+
+    return cleaned
+
+
+def _normalize_confidence(value: Any) -> str:
+    """
+    Convert confidence into High / Medium / Low.
+    Handles:
+    - numeric string like "0.9"
+    - float/int
+    - existing labels
+    """
+    if value is None:
+        return "Medium"
+
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return "Medium"
+
+        lower = raw.lower()
+        if lower in {"high", "medium", "low"}:
+            return raw.title()
+
+        # Try numeric parse
+        try:
+            numeric = float(raw)
+        except ValueError:
+            return "Medium"
+    elif isinstance(value, (int, float)):
+        numeric = float(value)
+    else:
+        return "Medium"
+
+    if numeric >= 0.85:
+        return "High"
+    if numeric >= 0.65:
+        return "Medium"
+    return "Low"
 
 
 def _normalize_medicines(medicines: Any) -> List[Dict[str, str]]:
-    """Ensure medicine list always has consistent keys."""
+    """Ensure medicine list always has consistent keys and cleaned values."""
     if not isinstance(medicines, list):
         return []
 
@@ -75,16 +157,16 @@ def _normalize_medicines(medicines: Any) -> List[Dict[str, str]]:
         if not isinstance(med, dict):
             continue
 
-        original_name = str(med.get("name", "Not specified")).strip()
+        original_name = med.get("name", "Not specified")
         corrected_name = _fuzzy_match_medicine(original_name)
 
         normalized.append(
             {
                 "name": corrected_name or "Not specified",
-                "dosage": str(med.get("dosage", "Not specified")).strip() or "Not specified",
-                "frequency": str(med.get("frequency", "Not specified")).strip() or "Not specified",
-                "duration": str(med.get("duration", "Not specified")).strip() or "Not specified",
-                "confidence": str(med.get("confidence", "Medium")).strip() or "Medium",
+                "dosage": _clean_text(med.get("dosage", "Not specified")),
+                "frequency": _clean_text(med.get("frequency", "Not specified")),
+                "duration": _clean_text(med.get("duration", "Not specified")),
+                "confidence": _normalize_confidence(med.get("confidence", "Medium")),
             }
         )
 
@@ -94,11 +176,13 @@ def _normalize_medicines(medicines: Any) -> List[Dict[str, str]]:
 def parse_prescription_image(base64_image: str) -> Dict[str, Any]:
     """
     Parse a prescription image using Groq Vision.
-    Returns a dict:
+
+    Returns:
     {
         "medicines": [...],
         "doctor_notes": "...",
         "unreadable_text_present": bool,
+        "raw_extracted_text": "...",
         "error": None | str
     }
     """
@@ -107,6 +191,7 @@ def parse_prescription_image(base64_image: str) -> Dict[str, Any]:
             "medicines": [],
             "doctor_notes": "",
             "unreadable_text_present": False,
+            "raw_extracted_text": None,
             "error": "Groq API key not configured.",
         }
 
@@ -147,14 +232,17 @@ def parse_prescription_image(base64_image: str) -> Dict[str, Any]:
         if content.endswith("```"):
             content = content[:-3]
 
-        parsed = json.loads(content.strip())
+        content = content.strip()
+
+        parsed = json.loads(content)
 
         medicines = _normalize_medicines(parsed.get("medicines", []))
 
         return {
             "medicines": medicines,
-            "doctor_notes": parsed.get("doctor_notes", "") or "",
+            "doctor_notes": _clean_text(parsed.get("doctor_notes", ""), default=""),
             "unreadable_text_present": bool(parsed.get("unreadable_text_present", False)),
+            "raw_extracted_text": content,
             "error": None,
         }
 
@@ -163,6 +251,7 @@ def parse_prescription_image(base64_image: str) -> Dict[str, Any]:
             "medicines": [],
             "doctor_notes": "",
             "unreadable_text_present": False,
+            "raw_extracted_text": None,
             "error": "Failed to parse model response into JSON. Response might be malformed.",
         }
     except Exception as exc:
@@ -170,5 +259,6 @@ def parse_prescription_image(base64_image: str) -> Dict[str, Any]:
             "medicines": [],
             "doctor_notes": "",
             "unreadable_text_present": False,
+            "raw_extracted_text": None,
             "error": f"Error parsing prescription: {str(exc)}",
         }

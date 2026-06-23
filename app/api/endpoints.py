@@ -25,12 +25,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------
 # Retrieval relevance helpers
 # ---------------------------------------------------------------------
-
 def get_relevance_level(score: float) -> tuple[str, str]:
-    """
-    Convert the hybrid retrieval score into a descriptive relevance level.
-    Important: retrieval score != diagnosis probability
-    """
     if score >= 0.80:
         level = "HIGH"
     elif score >= 0.50:
@@ -50,24 +45,11 @@ def get_relevance_level(score: float) -> tuple[str, str]:
 # ---------------------------------------------------------------------
 # Main query endpoint
 # ---------------------------------------------------------------------
-
 @router.post("/query", response_model=QueryResponse)
 def handle_query(
     request: QueryRequest,
     api_key: str = Depends(verify_api_key),
 ) -> QueryResponse:
-    """
-    Handle medical information query.
-
-    Flow:
-    1. Emergency detection
-    2. Retrieval
-    3. Severity check
-    4. LLM answer generation
-    5. Return structured response
-    """
-
-    # 1) Emergency detection first
     emergency_result = check_emergency(request.query)
 
     if emergency_result:
@@ -91,7 +73,6 @@ def handle_query(
             safety_reason=None,
         )
 
-    # 2) Hybrid retrieval
     search_result = retrieval_service.search(
         query=request.query,
         top_k=request.top_k,
@@ -100,17 +81,15 @@ def handle_query(
     top_relevance = float(search_result.get("top_relevance", 0.0))
     relevance_level, confidence_note = get_relevance_level(top_relevance)
 
-    # 3) Severity
     severity_info = check_severity(request.query)
 
-    # 4) LLM generation
     llm_result = llm_service.generate_response(
         query=request.query,
         retrieval_result=search_result,
     )
 
-    # 5) Sources
     sources: list[SourceItem] = []
+
     for item in search_result.get("results", [])[: request.top_k]:
         metadata = item.get("metadata", {}) or {}
         sources.append(
@@ -122,7 +101,6 @@ def handle_query(
             )
         )
 
-    # 6) Final response
     return QueryResponse(
         query=request.query,
         answer_mode=llm_result.get("answer_mode", "general_information_fallback"),
@@ -145,8 +123,10 @@ def handle_query(
 # ---------------------------------------------------------------------
 # Prescription upload endpoint
 # ---------------------------------------------------------------------
-
-@router.post("/prescription/upload", response_model=PrescriptionResponse)
+@router.post(
+    "/prescription/upload",
+    response_model=PrescriptionResponse,
+)
 async def upload_prescription(
     file: UploadFile = File(...),
     api_key: str = Depends(verify_api_key),
@@ -155,62 +135,59 @@ async def upload_prescription(
     Upload prescription image and extract medicines using Groq Vision.
     Accepts image files like jpg/jpeg/png/webp.
     """
-    try:
-        if not file.content_type or not file.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only image files are allowed for prescription upload.",
-            )
 
-        file_bytes = await file.read()
-        if not file_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Uploaded file is empty.",
-            )
+    allowed_types = {"image/jpeg", "image/png", "image/webp"}
 
-        base64_image = f"data:{file.content_type};base64,{base64.b64encode(file_bytes).decode('utf-8')}"
-        result = parse_prescription_image(base64_image)
-
-        return PrescriptionResponse(
-            medicines=result.get("medicines", []),
-            doctor_notes=result.get("doctor_notes", ""),
-            unreadable_text_present=result.get("unreadable_text_present", False),
-            error=result.get("error"),
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPG, PNG, and WEBP prescription images are allowed.",
         )
 
-    except HTTPException:
-        raise
-    except Exception as exc:
+    contents = await file.read()
+
+    if not contents:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prescription upload failed: {str(exc)}",
-        ) from exc
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty.",
+        )
+
+    # 5 MB max
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Prescription image size must be less than 5MB.",
+        )
+
+    base64_image = base64.b64encode(contents).decode("utf-8")
+
+    result = parse_prescription_image(base64_image)
+
+    return PrescriptionResponse(
+        medicines=result.get("medicines", []),
+        doctor_notes=result.get("doctor_notes", ""),
+        unreadable_text_present=result.get("unreadable_text_present", False),
+        raw_extracted_text=result.get("raw_extracted_text"),
+        error=result.get("error"),
+    )
 
 
 # ---------------------------------------------------------------------
 # Admin endpoints
 # ---------------------------------------------------------------------
-
-@router.get("/admin/books", dependencies=[Depends(verify_api_key)])
+@router.get(
+    "/admin/books",
+    dependencies=[Depends(verify_api_key)],
+)
 def list_books():
-    """
-    Return the registered medical books and ingestion metadata.
-    """
     return ingestion_service.load_registry()
 
 
-@router.post("/admin/reindex", dependencies=[Depends(verify_api_key)])
+@router.post(
+    "/admin/reindex",
+    dependencies=[Depends(verify_api_key)],
+)
 def trigger_reindex(request: ReindexRequest):
-    """
-    Control the ingestion pipeline.
-
-    Supported modes:
-        append
-        replace
-        delete
-        rebuild
-    """
     mode = request.mode.lower().strip()
 
     try:
