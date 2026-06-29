@@ -6,6 +6,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  FileImage,
 } from 'lucide-react'
 
 function formatDate(timestamp) {
@@ -25,9 +26,11 @@ function formatDate(timestamp) {
 export default function Sidebar({
   sessions,
   activeSessionId,
+  activePage,
   onSelect,
   onNew,
   onDelete,
+  onSelectPage,
   isOpen,
   onClose,
 }) {
@@ -90,6 +93,51 @@ export default function Sidebar({
           </button>
         </div>
 
+        {/* MAIN NAV */}
+        <div className="px-2 pb-2">
+          {isOpen && (
+            <p className="px-3 py-2 text-xs text-slate-400 uppercase font-semibold">
+              Workspace
+            </p>
+          )}
+
+          {/* Chat page */}
+          <button
+            onClick={() => onSelectPage('chat')}
+            className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 transition mb-1 ${
+              activePage === 'chat'
+                ? 'bg-medmitra-50 border border-medmitra-200 text-medmitra-800'
+                : 'hover:bg-slate-100 text-slate-700'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4 flex-shrink-0" />
+
+            {isOpen && (
+              <span className="text-sm font-medium">
+                Chat Assistant
+              </span>
+            )}
+          </button>
+
+          {/* Prescription Upload page */}
+          <button
+            onClick={() => onSelectPage('prescription')}
+            className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 transition ${
+              activePage === 'prescription'
+                ? 'bg-medmitra-50 border border-medmitra-200 text-medmitra-800'
+                : 'hover:bg-slate-100 text-slate-700'
+            }`}
+          >
+            <FileImage className="w-4 h-4 flex-shrink-0" />
+
+            {isOpen && (
+              <span className="text-sm font-medium">
+                Prescription Upload
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto px-2">
           {isOpen && (
@@ -104,9 +152,12 @@ export default function Sidebar({
               className="group relative mb-1"
             >
               <button
-                onClick={() => onSelect(session.id)}
+                onClick={() => {
+                  onSelectPage('chat')
+                  onSelect(session.id)
+                }}
                 className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 transition ${
-                  session.id === activeSessionId
+                  session.id === activeSessionId && activePage === 'chat'
                     ? 'bg-medmitra-50 border border-medmitra-200 text-medmitra-800'
                     : 'hover:bg-slate-100 text-slate-700'
                 }`}
@@ -156,7 +207,7 @@ export default function Sidebar({
 
             {isOpen && (
               <span className="text-xs text-slate-500">
-                Powered by Llama 3.2 + RAG
+                Powered by Llama + RAG + Vision
               </span>
             )}
           </div>
@@ -204,6 +255,38 @@ export default function Sidebar({
                   className="p-2 rounded-lg hover:bg-slate-100"
                 >
                   <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-2">
+                <button
+                  onClick={() => {
+                    onSelectPage('chat')
+                    onClose()
+                  }}
+                  className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 transition ${
+                    activePage === 'chat'
+                      ? 'bg-medmitra-50 border border-medmitra-200 text-medmitra-800'
+                      : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="text-sm font-medium">Chat Assistant</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onSelectPage('prescription')
+                    onClose()
+                  }}
+                  className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 transition ${
+                    activePage === 'prescription'
+                      ? 'bg-medmitra-50 border border-medmitra-200 text-medmitra-800'
+                      : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <FileImage className="w-4 h-4" />
+                  <span className="text-sm font-medium">Prescription Upload</span>
                 </button>
               </div>
             </motion.aside>
